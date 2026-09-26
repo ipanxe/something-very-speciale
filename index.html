@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>For You</title>
+
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: Arial, sans-serif;
+
+            color: white;
+
+            background:
+                radial-gradient(circle at top, #312e81, transparent 40%),
+                linear-gradient(135deg, #020617, #111827);
+
+            overflow: hidden;
+        }
+
+        /* Background stars */
+
+        .stars {
+            position: fixed;
+            inset: 0;
+
+            background-image:
+                radial-gradient(white 1px, transparent 1px);
+
+            background-size: 50px 50px;
+            opacity: 0.15;
+
+            pointer-events: none;
+        }
+
+
+        .container {
+            position: relative;
+
+            width: min(90%, 600px);
+
+            padding: 50px 30px;
+
+            text-align: center;
+
+            background: rgba(255, 255, 255, 0.07);
+
+            border: 1px solid rgba(255, 255, 255, 0.15);
+
+            border-radius: 25px;
+
+            backdrop-filter: blur(15px);
+
+            box-shadow:
+                0 25px 70px rgba(0, 0, 0, 0.5);
+        }
+
+
+        h1 {
+            margin: 0 0 12px;
+
+            font-size: clamp(2rem, 7vw, 3rem);
+        }
+
+
+        #subtitle {
+            color: #cbd5e1;
+
+            margin-bottom: 35px;
+
+            font-size: 1rem;
+        }
+
+
+        /* Countdown */
+
+        #countdown {
+            font-size: clamp(2rem, 8vw, 3.2rem);
+
+            font-weight: bold;
+
+            font-variant-numeric: tabular-nums;
+
+            margin: 30px 0;
+
+            letter-spacing: 2px;
+        }
+
+
+        #countdownLabel {
+            color: #94a3b8;
+
+            font-size: 0.9rem;
+        }
+
+
+        /* Button */
+
+        #button {
+            padding: 16px 38px;
+
+            border: none;
+            border-radius: 999px;
+
+            font-size: 1.05rem;
+            font-weight: bold;
+
+            color: white;
+
+            background: #4f46e5;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.25s,
+                box-shadow 0.25s,
+                background 0.25s;
+        }
+
+
+        #button:disabled {
+            background: #334155;
+
+            color: #64748b;
+
+            cursor: not-allowed;
+
+            box-shadow: none;
+        }
+
+
+        #button.unlocked {
+            background: #6366f1;
+
+            animation: glow 1.5s infinite alternate;
+        }
+
+
+        #button.unlocked:hover {
+            transform: scale(1.08);
+
+            background: #818cf8;
+        }
+
+
+        @keyframes glow {
+            from {
+                box-shadow:
+                    0 0 10px rgba(99, 102, 241, 0.3);
+            }
+
+            to {
+                box-shadow:
+                    0 0 35px rgba(129, 140, 248, 0.9);
+            }
+        }
+
+
+        /* Hidden message */
+
+        #message {
+            display: none;
+
+            margin-top: 35px;
+
+            padding: 25px;
+
+            border-radius: 18px;
+
+            background: rgba(255, 255, 255, 0.08);
+
+            border: 1px solid rgba(255, 255, 255, 0.12);
+
+            animation: appear 1s ease forwards;
+        }
+
+
+        #message h2 {
+            margin-top: 0;
+        }
+
+
+        #message p {
+            color: #cbd5e1;
+
+            line-height: 1.7;
+
+            white-space: pre-line;
+        }
+
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        #status {
+            margin-top: 20px;
+
+            min-height: 20px;
+
+            color: #94a3b8;
+
+            font-size: 0.9rem;
+        }
+
+
+        .success {
+            color: #86efac !important;
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="stars"></div>
+
+
+<div class="container">
+
+    <h1>Saba bro</h1>
+
+<div id="subtitle">
+    You'll have to wait until the time comes.
+</div>
+
+<div id="countdownLabel">
+    TIME REMAINING
+</div>
+
+<div id="countdown">
+    00:00:00
+</div>
+
+<button id="button" disabled>
+    🔒 LOCKED
+</button>
+
+    <div id="message">
+
+        <h2>pibeday yo</h2>
+
+        <p>
+nah adiah 666
+        </p>
+
+    </div>
+
+
+    <div id="status"></div>
+
+</div>
+
+
+
+<script>
+
+/* =====================================================
+   EMAILJS SETTINGS
+   =====================================================
+
+   Replace these with your EmailJS details.
+*/
+
+const EMAILJS_PUBLIC_KEY = "gBYuhOW4VCXR4MPbT";
+
+const EMAILJS_SERVICE_ID = "service_j0q9sx5";
+
+const EMAILJS_TEMPLATE_ID = "template_hzeteuf";
+
+
+/* Initialize EmailJS */
+
+emailjs.init({
+    publicKey: EMAILJS_PUBLIC_KEY
+});
+
+
+
+/* =====================================================
+   UNLOCK TIME
+   =====================================================
+
+   27 September 2026
+   00:00:00
+   Malaysia Time (UTC+8)
+*/
+
+const targetDate = new Date(
+    "2026-09-26T00:00:00+08:00"
+);
+
+
+
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
+
+const countdown =
+    document.getElementById("countdown");
+
+const button =
+    document.getElementById("button");
+
+const subtitle =
+    document.getElementById("subtitle");
+
+const message =
+    document.getElementById("message");
+
+const status =
+    document.getElementById("status");
+
+
+
+/* =====================================================
+   COUNTDOWN
+   ===================================================== */
+
+function updateCountdown() {
+
+    const now = new Date();
+
+    const difference =
+        targetDate.getTime() - now.getTime();
+
+
+    /*
+       If the time has arrived
+    */
+
+    if (difference <= 0) {
+
+        countdown.textContent = "00:00:00";
+
+        subtitle.textContent =
+            "The wait is over.";
+
+        button.disabled = false;
+
+        button.textContent =
+            "🔓 OPEN";
+
+        button.classList.add("unlocked");
+
+        return;
+    }
+
+
+    /*
+       Convert milliseconds into seconds
+    */
+
+    const totalSeconds =
+        Math.floor(difference / 1000);
+
+
+    const days =
+        Math.floor(totalSeconds / 86400);
+
+
+    const hours =
+        Math.floor(
+            (totalSeconds % 86400) / 3600
+        );
+
+
+    const minutes =
+        Math.floor(
+            (totalSeconds % 3600) / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    /*
+       Display countdown
+    */
+
+    countdown.textContent =
+        `${days}d ` +
+        `${String(hours).padStart(2, "0")}:` +
+        `${String(minutes).padStart(2, "0")}:` +
+        `${String(seconds).padStart(2, "0")}`;
+}
+
+
+
+/* Update immediately */
+
+updateCountdown();
+
+
+/* Update every second */
+
+setInterval(updateCountdown, 1000);
+
+
+
+/* =====================================================
+   BUTTON
+   ===================================================== */
+
+button.addEventListener("click", async () => {
+
+    /*
+       Extra protection against clicking early
+    */
+
+    if (new Date().getTime() <
+        targetDate.getTime()) {
+
+        return;
+    }
+
+
+    /*
+       Prevent double clicking
+    */
+
+    button.disabled = true;
+
+    button.textContent =
+        "Opening...";
+
+
+    /*
+       Show the secret message
+    */
+
+    message.style.display = "block";
+
+
+    /*
+       Scroll to message on small screens
+    */
+
+    setTimeout(() => {
+
+        message.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+    }, 100);
+
+
+
+    /*
+       Send email notification
+    */
+
+    status.textContent =
+        "Sending notification...";
+
+
+    try {
+
+        await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_TEMPLATE_ID,
+            {
+                message:
+                    "The secret button was clicked!",
+
+                clicked_at:
+                    new Date().toLocaleString(
+                        "en-MY",
+                        {
+                            timeZone:
+                                "Asia/Kuala_Lumpur"
+                        }
+                    )
+            }
+        );
+
+
+        status.textContent =
+            "Notification sent ✓";
+
+        status.classList.add("success");
+
+        button.textContent =
+            "✓ OPENED";
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "The message opened, but the notification could not be sent.";
+
+        button.disabled = false;
+
+        button.textContent =
+            "🔓 OPEN";
+    }
+
+});
+
+</script>
+
+</body>
+</html>
